@@ -10,7 +10,7 @@ import sys
 import re
 from datetime import datetime
 from decouple import config
-from pyrogram import Client, filters
+from pyrogram import Client, filters, idle
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import FloodWait
 import motor.motor_asyncio as motor
@@ -440,7 +440,7 @@ async def main():
             logger.info("Bot running. Press Ctrl+C to stop.")
             logger.info("=" * 70)
             
-            await app.idle()
+            await idle()
             
     except KeyboardInterrupt:
         logger.info("\n✓ Bot stopped")
