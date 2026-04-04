@@ -452,8 +452,8 @@ async def main():
     # Initialize database
     await init_db()
     
-    # Start HTTP server for Render health checks
-    await start_http_server()
+    # Start HTTP server for Render health checks (non-blocking)
+    asyncio.create_task(start_http_server())
     
     try:
         async with app:
