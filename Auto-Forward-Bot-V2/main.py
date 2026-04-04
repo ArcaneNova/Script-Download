@@ -452,6 +452,20 @@ async def start_http_server():
     logger.info(f"✓ HTTP server started on port {port}")
 
 
+async def keep_alive():
+    """Periodic heartbeat to prevent Render from spinning down."""
+    import aiohttp
+    while True:
+        try:
+            await asyncio.sleep(300)  # Every 5 minutes
+            async with aiohttp.ClientSession() as session:
+                async with session.get("http://127.0.0.1:8000/health", timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                    if resp.status == 200:
+                        logger.debug("✓ Keep-alive ping sent")
+        except Exception as e:
+            logger.debug(f"Keep-alive ping: {e}")
+
+
 # ===== MAIN =====
 
 async def main():
@@ -468,9 +482,10 @@ async def main():
     # Start HTTP server for Render health checks (non-blocking)
     try:
         asyncio.create_task(start_http_server())
-        logger.info("✓ HTTP server task created")
+        asyncio.create_task(keep_alive())
+        logger.info("✓ HTTP server and keep-alive tasks created")
     except Exception as e:
-        logger.warning(f"HTTP server startup warning: {e}")
+        logger.warning(f"Server startup warning: {e}")
     
     try:
         logger.info("Starting Pyrogram client...")
