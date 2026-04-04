@@ -170,17 +170,25 @@ async def get_topic_messages(client: Client, ch_id, topic_id: int) -> list:
 @app.on_message(filters.command("start") & filters.private)
 async def start_cmd(client: Client, message: Message):
     """Handle /start command - show main menu."""
-    logger.info(f"START command from user {message.from_user.id}")
-    
-    text = "🤖 **Telegram Topic Forwarder**\n\nSelect what you want to do:"
-    
-    kb = InlineKeyboardMarkup([
-        [InlineKeyboardButton("📥 Select Source Channel", callback_data="sel_ch")],
-        [InlineKeyboardButton("📊 View Status", callback_data="stat")],
-        [InlineKeyboardButton("❓ Help", callback_data="hlp")]
-    ])
-    
-    await message.reply_text(text, reply_markup=kb)
+    try:
+        logger.info(f"✓ /START command received from user {message.from_user.id}")
+        
+        text = "🤖 **Telegram Topic Forwarder**\n\nSelect what you want to do:"
+        
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("📥 Select Source Channel", callback_data="sel_ch")],
+            [InlineKeyboardButton("📊 View Status", callback_data="stat")],
+            [InlineKeyboardButton("❓ Help", callback_data="hlp")]
+        ])
+        
+        await message.reply_text(text, reply_markup=kb)
+        logger.info(f"✓ Menu sent to user {message.from_user.id}")
+    except Exception as e:
+        logger.error(f"ERROR in /start handler: {e}", exc_info=True)
+        try:
+            await message.reply_text(f"❌ Error: {str(e)[:100]}")
+        except:
+            pass
 
 
 @app.on_callback_query()
@@ -456,25 +464,29 @@ async def main():
     asyncio.create_task(start_http_server())
     
     try:
+        logger.info("Connecting to Telegram...")
         async with app:
+            logger.info("✓ Connected to Telegram")
             me = await app.get_me()
-            logger.info(f"✓ Connected as: @{me.username}")
+            logger.info(f"✓ Bot Username: @{me.username}")
             logger.info(f"✓ Destination Channel: {DESTINATION_CHANNEL}")
-            logger.info(f"✓ Bot is ready!")
-            logger.info("")
-            logger.info("Bot running. Press Ctrl+C to stop.")
+            logger.info(f"✓ Handlers Registered: 3 (start, callbacks, text)")
+            logger.info(f"✓ Bot is ready and waiting for messages!")
+            logger.info("=" * 70)
+            logger.info("Bot will respond to /start command")
             logger.info("=" * 70)
             
             await idle()
             
     except KeyboardInterrupt:
-        logger.info("\n✓ Bot stopped")
+        logger.info("\n✓ Bot stopped by user")
     except Exception as e:
-        logger.error(f"Fatal error: {e}", exc_info=True)
+        logger.error(f"FATAL ERROR: {e}", exc_info=True)
         sys.exit(1)
     finally:
         if mongo_client:
             mongo_client.close()
+            logger.info("✓ Database connection closed")
 
 
 if __name__ == "__main__":
