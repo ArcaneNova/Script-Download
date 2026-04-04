@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: python forwarder_advanced.py
+    startCommand: python bot_final.py
     envVars:
       - key: API_ID
         value: 35188145
@@ -16,5 +16,3 @@ services:
         value: "@gatearshadbackup"
       - key: DATABASE
         value: ""
-      - key: BOT_OWNER_ID
-        value: "0"
