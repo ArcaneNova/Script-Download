@@ -256,11 +256,14 @@ async def text_handler(client: Client, message: Message):
     uid = message.from_user.id
     text = message.text.strip()
     
-    # Ignore commands
+    logger.info(f"📨 Message received from user {uid}: '{text[:50]}...'")
+    
+    # Ignore commands - they're handled by start_cmd
     if text.startswith("/"):
+        logger.info(f"  (Command - will be handled separately)")
         return
     
-    logger.info(f"Text from user {uid}")
+    logger.info(f"✓ Processing text message from user {uid}")
     
     if uid not in sessions:
         sessions[uid] = {}
