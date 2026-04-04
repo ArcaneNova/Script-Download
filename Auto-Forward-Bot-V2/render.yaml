@@ -4,30 +4,17 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: python main.py
+    startCommand: python main_standalone.py
     envVars:
       - key: API_ID
         value: 35188145
       - key: API_HASH
         value: 3f725a3cf7a87167a58c4e098c9a1828
       - key: BOT_TOKEN
-        sync: false
-        description: "Your Telegram bot token"
-      - key: BOT_SESSION
-        value: bot
-      - key: DATABASE
-        sync: false
-        description: "MongoDB Connection String (URI)"
-      - key: DATABASE_NAME
-        value: forward-bot
-      - key: BOT_OWNER_ID
-        value: "0"
-        description: "Your Telegram user ID (optional)"
+        value: 8695455961:AAFzQOswXeDgkKMbImwI8jDrTd_glAmn39k
       - key: SOURCE_CHANNEL
         value: "https://t.me/+3CoEtU8yo0hhZGVh"
-        description: "Source channel to forward from"
       - key: DESTINATION_CHANNEL
         value: "@gatearshadbackup"
-        description: "Destination channel to forward to"
       - key: PORT
         value: "10000"
