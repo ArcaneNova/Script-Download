@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: auto-forward-bot-v2
+    name: telegram-topic-forwarder
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: python main_standalone.py
+    startCommand: python forwarder_advanced.py
     envVars:
       - key: API_ID
         value: 35188145
@@ -12,9 +12,9 @@ services:
         value: 3f725a3cf7a87167a58c4e098c9a1828
       - key: BOT_TOKEN
         value: 8695455961:AAFzQOswXeDgkKMbImwI8jDrTd_glAmn39k
-      - key: SOURCE_CHANNEL
-        value: "https://t.me/+3CoEtU8yo0hhZGVh"
       - key: DESTINATION_CHANNEL
         value: "@gatearshadbackup"
-      - key: PORT
-        value: "10000"
+      - key: DATABASE
+        value: ""
+      - key: BOT_OWNER_ID
+        value: "0"
