@@ -219,11 +219,15 @@ async def cb(client: Client, cq):
         await cq.answer(f"Error: {e}", show_alert=True)
 
 
-@app.on_message(filters.text & filters.private & ~filters.command)
+@app.on_message(filters.text & filters.private & filters.incoming)
 async def text(client: Client, message: Message):
     """Text handler."""
     uid = message.from_user.id
     text = message.text.strip()
+    
+    # Ignore commands
+    if text.startswith("/"):
+        return
     
     logger.info(f"Text from {uid}: {text[:50]}")
     
