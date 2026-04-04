@@ -15,13 +15,16 @@ logging.getLogger("pyrogram").setLevel(logging.ERROR)
 
 class Bot(Client): 
     def __init__(self):
+        # Only load plugins if NOT in auto-forward mode
+        plugins_config = {}
+        if not (Config.SOURCE_CHANNEL and Config.DESTINATION_CHANNEL):
+            plugins_config = {"root": "plugins"}
+        
         super().__init__(
             Config.BOT_SESSION,
             api_hash=Config.API_HASH,
             api_id=Config.API_ID,
-            plugins={
-                "root": "plugins"
-            },
+            plugins=plugins_config,
             workers=50,
             bot_token=Config.BOT_TOKEN
         )
@@ -129,20 +132,36 @@ class Bot(Client):
         if not channel_str:
             return None
         
+        # Handle private channel URLs like https://t.me/+3CoEtU8yo0hhZGVh
         if "t.me/" in channel_str:
-            match = re.search(r'(?:https?://)?t\.me/\+?([a-zA-Z0-9_-]+)', channel_str)
+            import re
+            # Try to extract numeric ID or username
+            match = re.search(r't\.me/c/(\d+)', channel_str)
+            if match:
+                # This is a private channel ID
+                channel_id = int(match.group(1))
+                return -100 * 1000000000 - channel_id  # Convert to Pyrogram format
+            
+            match = re.search(r't\.me/\+?([a-zA-Z0-9_-]+)', channel_str)
             if match:
                 username_or_id = match.group(1)
+                # If numeric, could be a channel ID
                 if username_or_id.isdigit():
                     return int(username_or_id)
                 else:
                     return f"@{username_or_id}"
         
+        # Handle @username format
         if channel_str.startswith("@"):
             return channel_str
         
+        # Try to parse as integer ID
         try:
-            return int(channel_str)
+            channel_id = int(channel_str)
+            # If it's a large number, assume it's a private channel ID
+            if channel_id > 1000000000:
+                return channel_id
+            return channel_id
         except ValueError:
             return channel_str
 
