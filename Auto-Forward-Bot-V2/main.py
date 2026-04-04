@@ -8,12 +8,14 @@ import asyncio
 import logging
 import sys
 import re
+import os
 from datetime import datetime
 from decouple import config
 from pyrogram import Client, filters, idle
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import FloodWait
 import motor.motor_asyncio as motor
+from aiohttp import web
 
 # Setup logging
 logging.basicConfig(
@@ -419,6 +421,26 @@ async def forward_messages_from_topic(client: Client, cq, uid: int, topic_id: in
         await cq.answer(f"Error: {str(e)[:100]}", show_alert=True)
 
 
+# ===== HTTP SERVER FOR RENDER HEALTH CHECK =====
+
+async def start_http_server():
+    """Start aiohttp web server for health checks."""
+    port = int(os.getenv("PORT", 8000))
+    
+    async def health_check(request):
+        return web.Response(text="OK", status=200)
+    
+    app = web.Application()
+    app.router.add_get("/", health_check)
+    app.router.add_get("/health", health_check)
+    
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    logger.info(f"✓ HTTP server started on port {port}")
+
+
 # ===== MAIN =====
 
 async def main():
@@ -429,6 +451,9 @@ async def main():
     
     # Initialize database
     await init_db()
+    
+    # Start HTTP server for Render health checks
+    await start_http_server()
     
     try:
         async with app:
