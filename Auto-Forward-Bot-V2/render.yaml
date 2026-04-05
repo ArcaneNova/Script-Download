@@ -1,18 +1,24 @@
 services:
   - type: web
-    name: telegram-topic-forwarder
+    name: auto-forward-bot-v2
     env: python
-    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
     envVars:
       - key: API_ID
-        value: 35188145
+        sync: false
       - key: API_HASH
-        value: 3f725a3cf7a87167a58c4e098c9a1828
+        sync: false
       - key: BOT_TOKEN
-        value: 8695455961:AAFzQOswXeDgkKMbImwI8jDrTd_glAmn39k
-      - key: DESTINATION_CHANNEL
-        value: "@gatearshadbackup"
+        sync: false
+      - key: BOT_SESSION
+        value: bot
       - key: DATABASE
-        value: ""
+        sync: false
+        description: MongoDB Connection String (URI)
+      - key: DATABASE_NAME
+        value: forward-bot
+        description: Name of the database to use
+      - key: BOT_OWNER_ID
+        sync: false
+        description: Telegram User ID of the bot owner

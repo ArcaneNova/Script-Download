@@ -1,15 +1,13 @@
-from decouple import config as env
+from os import environ 
 
 class Config:
-    API_ID = env("API_ID", default="577678")
-    API_HASH = env("API_HASH", default="d2c6e01uuiuiouioiuiou0fc6d7a1be")
-    BOT_TOKEN = env("BOT_TOKEN", default="70955...")
-    BOT_SESSION = env("BOT_SESSION", default="bot")
-    DATABASE_URI = env("DATABASE", default="mongodb+srv://chhjgjkkjhkjhkjh@cluster0.xowzpr4.mongodb.net/")
-    DATABASE_NAME = env("DATABASE_NAME", default="forward-bot")
-    BOT_OWNER_ID = [int(id) for id in env("BOT_OWNER_ID", default='6964148334').split()]
-    SOURCE_CHANNEL = env("SOURCE_CHANNEL", default=None)
-    DESTINATION_CHANNEL = env("DESTINATION_CHANNEL", default=None)
+    API_ID = environ.get("API_ID", "577678")
+    API_HASH = environ.get("API_HASH", "d2c6e01uuiuiouioiuiou0fc6d7a1be")
+    BOT_TOKEN = environ.get("BOT_TOKEN", "70955...") 
+    BOT_SESSION = environ.get("BOT_SESSION", "bot") 
+    DATABASE_URI = environ.get("DATABASE", "mongodb+srv://chhjgjkkjhkjhkjh@cluster0.xowzpr4.mongodb.net/")
+    DATABASE_NAME = environ.get("DATABASE_NAME", "forward-bot")
+    BOT_OWNER_ID = [int(id) for id in environ.get("BOT_OWNER_ID", '6964148334').split()]
 
 class temp(object): 
     lock = {}

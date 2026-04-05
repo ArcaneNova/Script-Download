@@ -1,4 +1,6 @@
+pyrofork
 motor
+TgCrypto
 Dnspython
 cryptg
 tgcrypto

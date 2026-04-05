@@ -32,6 +32,23 @@ Advance Telegram Bot that can work as Message/Files Forwarder from Restricted or
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
+To deploy on Render:
+
+1. Push this repository to GitHub.
+2. In Render, create a new **Web Service** and connect the repo.
+3. Use the included `render.yaml` blueprint, or set:
+   - **Build command**: `pip install -r requirements.txt`
+   - **Start command**: `python main.py`
+4. Add these environment variables in Render:
+   - `API_ID`
+   - `API_HASH`
+   - `BOT_TOKEN`
+   - `BOT_OWNER_ID`
+   - `DATABASE`
+   - `DATABASE_NAME` if you want a custom database name
+
+Render will provide the `PORT` variable automatically, and `main.py` already binds to it.
+
 ### Heroku Deployment
 
 1. **Setup on Heroku**:
