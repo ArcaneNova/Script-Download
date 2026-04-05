@@ -4,6 +4,7 @@ from .utils import STS
 from database import db
 from config import temp 
 from translation import Translation
+from .link_parser import parse_telegram_link
 from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait 
 from pyrogram.errors.exceptions.not_acceptable_406 import ChannelPrivate as PrivateChat
@@ -38,13 +39,30 @@ async def run(bot, message):
     else:
        toid = channels[0]['chat_id']
        to_title = channels[0]['title']
+    
     fromid = await bot.ask(message.chat.id, Translation.FROM_MSG, reply_markup=ReplyKeyboardRemove())
     if fromid.text and fromid.text.startswith('/'):
         await message.reply(Translation.CANCEL)
         return 
 
     continuous = False
-
+    chat_id = None
+    last_msg_id = None
+    title = None
+    
+    # Try to parse as message link first
+    if fromid.text and not fromid.forward_date:
+        parsed = parse_telegram_link(fromid.text)
+        if parsed:
+            chat_id, last_msg_id = parsed
+            title = "Link Source"
+            try:
+                title = (await bot.get_chat(chat_id)).title
+            except:
+                pass
+        elif fromid.text.lower() not in ["me", "saved"]:
+            return await message.reply('**Invalid message link. Use format: t.me/channel/123 or t.me/c/ID/123 or type "me" for saved messages**')
+    
     # Handle "Saved Messages" input
     if fromid.text and fromid.text.lower() in ["me", "saved"]:
         if _bot.get('is_bot'):
@@ -61,7 +79,7 @@ async def run(bot, message):
 
         if "live" in mode_msg.text.lower() or "2" in mode_msg.text:
             continuous = True
-            last_msg_id = 1000000 # Just a high number, but loop will be infinite/wait
+            last_msg_id = 1000000
         else:
             limit_msg = await bot.ask(message.chat.id, Translation.SAVED_MSG_LIMIT)
             if limit_msg.text.startswith('/'):
@@ -69,53 +87,45 @@ async def run(bot, message):
                  return
 
             if limit_msg.text.lower() == "all":
-                 last_msg_id = 0 # 0 usually means no limit in some contexts, but let's use a very high number if iter logic relies on it?
-                 # iter_messages: if limit > 0, it iterates until limit.
-                 # If we want ALL, we should use a high number or verify how 0 is handled.
-                 # In test.py: new_diff = min(200, limit - current).
-                 # If limit is 0, 0-0 = 0. new_diff <= 0. Return.
-                 # So we need a high number.
                  last_msg_id = 10000000
             elif not limit_msg.text.isdigit():
                  await message.reply("Invalid number.")
                  return
             else:
-                 last_msg_id = int(limit_msg.text) # Using last_msg_id as limit/count
+                 last_msg_id = int(limit_msg.text)
 
-    elif fromid.text and not fromid.forward_date:
-        regex = re.compile(r"(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")
-        match = regex.match(fromid.text.replace("?single", ""))
-        if not match:
-            return await message.reply('Invalid link')
-        chat_id = match.group(4)
-        last_msg_id = int(match.group(5))
-        if chat_id.isnumeric():
-            chat_id  = int(("-100" + chat_id))
-    elif fromid.forward_from_chat.type in [enums.ChatType.CHANNEL]:
+    # Handle forwarded message from channel
+    elif fromid.forward_from_chat and fromid.forward_from_chat.type in [enums.ChatType.CHANNEL]:
         last_msg_id = fromid.forward_from_message_id
         chat_id = fromid.forward_from_chat.username or fromid.forward_from_chat.id
         if last_msg_id == None:
-           return await message.reply_text("**This may be a forwarded message from a group and sended by anonymous admin. instead of this please send last message link from group**")
-    else:
-        await message.reply_text("**invalid !**")
-        return 
+           return await message.reply_text("**This may be a forwarded message from a group and sent by anonymous admin. Please send last message link from group instead**")
+        try:
+            title = fromid.forward_from_chat.title
+        except:
+            title = "Forwarded Channel"
+    
+    # If no valid input was parsed
+    if chat_id is None:
+        await message.reply_text("**Invalid input! Please either:**\n- **Paste a message link** (t.me/channel/123)\n- **Type** 'me' or 'saved'\n- **Forward a message** from the source")
+        return
 
     if chat_id != "me":
         try:
-            title = (await bot.get_chat(chat_id)).title
-      #  except ChannelInvalid:
-            #return await fromid.reply("**Given source chat is copyrighted channel/group. you can't forward messages from there**")
+            if not title:
+                title = (await bot.get_chat(chat_id)).title
         except (PrivateChat, ChannelPrivate, ChannelInvalid):
-            title = "private" if fromid.text else fromid.forward_from_chat.title
+            title = title or "private"
         except (UsernameInvalid, UsernameNotModified):
-            return await message.reply('Invalid Link specified.')
+            return await message.reply('Invalid channel specified.')
         except Exception as e:
-            return await message.reply(f'Errors - {e}')
+            return await message.reply(f'Error: {e}')
 
     skipno = await bot.ask(message.chat.id, Translation.SKIP_MSG)
     if skipno.text.startswith('/'):
         await message.reply(Translation.CANCEL)
         return
+    
     forward_id = f"{user_id}-{skipno.id}"
     buttons = [[
         InlineKeyboardButton('Yes', callback_data=f"start_public_{forward_id}"),

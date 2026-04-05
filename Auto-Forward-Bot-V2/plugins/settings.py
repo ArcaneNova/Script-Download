@@ -1,8 +1,10 @@
 import asyncio 
+import re
 from database import db
 from translation import Translation
 from pyrogram import Client, filters
 from .test import get_configs, update_configs, CLIENT, parse_buttons
+from .link_parser import parse_channel_link
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 CLIENT = CLIENT()
@@ -76,21 +78,44 @@ async def settings_query(bot, query):
   elif type=="addchannel":  
      await query.message.delete()
      try:
-         text = await bot.send_message(user_id, "<b>❪ SET TARGET CHAT ❫\n\nForward a message from Your target chat\n/cancel - cancel this process</b>")
+         text = await bot.send_message(user_id, "<b>❪ SET TARGET CHAT ❫\n\nForward a message from your target chat OR paste the channel link (t.me/channelname or t.me/c/ID)\n/cancel - cancel this process</b>")
          chat_ids = await bot.listen(chat_id=user_id, timeout=300)
          if chat_ids.text=="/cancel":
             await chat_ids.delete()
             return await text.edit_text(
                   "<b>process canceled</b>",
                   reply_markup=InlineKeyboardMarkup(buttons))
-         elif not chat_ids.forward_date:
-            await chat_ids.delete()
-            return await text.edit_text("**This is not a forward message**")
-         else:
+         
+         chat_id = None
+         title = None
+         username = None
+         
+         # Try to parse as link first
+         if chat_ids.text:
+            parsed_link = parse_channel_link(chat_ids.text)
+            if parsed_link:
+               chat_id = parsed_link
+               # Try to get channel info from Telegram
+               try:
+                  chat_info = await bot.get_chat(chat_id)
+                  title = chat_info.title
+                  username = chat_info.username
+               except:
+                  title = str(chat_id)
+                  username = None
+        
+         # If not a link, try forwarded message
+         if not chat_id and chat_ids.forward_date:
             chat_id = chat_ids.forward_from_chat.id
             title = chat_ids.forward_from_chat.title
             username = chat_ids.forward_from_chat.username
-            username = "@" + username if username else "private"
+         
+         # If still no chat_id, it's invalid
+         if not chat_id:
+            await chat_ids.delete()
+            return await text.edit_text("**Invalid input. Please send a channel link (t.me/name) or forward a message from the channel.**")
+         
+         username = "@" + username if username else "private"
          chat = await db.add_channel(user_id, chat_id, title, username)
          await chat_ids.delete()
          await text.edit_text(
