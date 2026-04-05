@@ -251,22 +251,6 @@ async def callback_handler(client: Client, cq):
         await cq.answer(f"Error: {e}", show_alert=True)
 
 
-# Universal message logger - catch EVERYTHING
-@app.on_message()
-async def debug_all_messages(client: Client, message: Message):
-    """Log every single message - for debugging."""
-    try:
-        msg_type = "Unknown"
-        if message.text:
-            msg_type = f"Text: {message.text[:30]}"
-        elif message.command:
-            msg_type = f"Command: {message.command}"
-        
-        logger.info(f"📩 ALL_MESSAGES: Type={msg_type}, UserID={message.from_user.id if message.from_user else 'None'}, IsPrivate={message.chat.type == 'private'}")
-    except Exception as e:
-        logger.error(f"Debug logger error: {e}")
-
-
 @app.on_message(filters.text & filters.private & filters.incoming)
 async def text_handler(client: Client, message: Message):
     """Handle text messages (channel URLs, etc.)."""
