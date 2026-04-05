@@ -167,28 +167,34 @@ async def get_topic_messages(client: Client, ch_id, topic_id: int) -> list:
 
 # ===== BOT COMMANDS =====
 
-@app.on_message(filters.command("start"))
+async def send_main_menu(message: Message, command_name: str):
+    """Send the main menu for start/settings/help commands."""
+    user_id = message.from_user.id if message.from_user else "unknown"
+    logger.info(f"✓✓✓ /{command_name.upper()} COMMAND RECEIVED FROM USER {user_id} ✓✓✓")
+
+    text = "🤖 **Telegram Topic Forwarder**\n\nSelect what you want to do:"
+
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("📥 Select Source Channel", callback_data="sel_ch")],
+        [InlineKeyboardButton("📊 View Status", callback_data="stat")],
+        [InlineKeyboardButton("❓ Help", callback_data="hlp")]
+    ])
+
+    await message.reply_text(text, reply_markup=kb)
+    logger.info(f"✓✓✓ MENU RESPONSE SENT FOR /{command_name.upper()} ✓✓✓")
+
+
+@app.on_message(filters.command(["start", "settings", "help"]))
 async def start_cmd(client: Client, message: Message):
-    """Handle /start command - show main menu."""
+    """Handle /start, /settings, and /help command - show main menu."""
     try:
-        user_id = message.from_user.id if message.from_user else "unknown"
-        logger.info(f"✓✓✓ /START COMMAND RECEIVED FROM USER {user_id} ✓✓✓")
-        
-        text = "🤖 **Telegram Topic Forwarder**\n\nSelect what you want to do:"
-        
-        kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("📥 Select Source Channel", callback_data="sel_ch")],
-            [InlineKeyboardButton("📊 View Status", callback_data="stat")],
-            [InlineKeyboardButton("❓ Help", callback_data="hlp")]
-        ])
-        
-        await message.reply_text(text, reply_markup=kb)
-        logger.info(f"✓✓✓ MENU RESPONSE SENT ✓✓✓")
+        command_name = message.command[0] if message.command else "start"
+        await send_main_menu(message, command_name)
     except Exception as e:
-        logger.error(f"❌ ERROR in /start handler: {e}", exc_info=True)
+        logger.error(f"❌ ERROR in command handler: {e}", exc_info=True)
         try:
             await message.reply_text(f"❌ Error: {str(e)[:100]}")
-        except:
+        except Exception:
             pass
 
 
@@ -453,20 +459,6 @@ async def start_http_server():
     logger.info(f"✓ HTTP server started on port {port}")
 
 
-async def keep_alive():
-    """Periodic heartbeat to prevent Render from spinning down."""
-    import aiohttp
-    while True:
-        try:
-            await asyncio.sleep(300)  # Every 5 minutes
-            async with aiohttp.ClientSession() as session:
-                async with session.get("http://127.0.0.1:8000/health", timeout=aiohttp.ClientTimeout(total=5)) as resp:
-                    if resp.status == 200:
-                        logger.debug("✓ Keep-alive ping sent")
-        except Exception as e:
-            logger.debug(f"Keep-alive ping: {e}")
-
-
 # ===== MAIN =====
 
 async def main():
@@ -480,49 +472,55 @@ async def main():
     # Initialize database
     await init_db()
     
-    # Start HTTP server for Render health checks (non-blocking, but simpler)
-    loop = asyncio.get_event_loop()
+    http_server_task = None
     try:
-        # Schedule HTTP server to start in background
-        loop.create_task(start_http_server())
-        loop.create_task(keep_alive())
-        logger.info("✓ HTTP server and keep-alive tasks scheduled")
-    except Exception as e:
-        logger.warning(f"Server startup warning: {e}")
-    
-    try:
+        logger.info("Starting HTTP server...")
+        http_server_task = asyncio.create_task(start_http_server())
+
         logger.info("Starting Pyrogram client...")
-        async with app:
-            logger.info("✓✓✓ PYROGRAM CLIENT CONNECTED ✓✓✓")
-            
-            # Verify bot identity
-            me = await app.get_me()
-            logger.info(f"✓ Bot Username: @{me.username}")
-            logger.info(f"✓ Bot ID: {me.id}")
-            
-            # Verify destination channel
-            logger.info(f"✓ Destination Channel: {DESTINATION_CHANNEL}")
-            
-            # Log handlers info
-            logger.info("✓ Handlers Registered:")
-            logger.info("  - Handler 1: /start command (private messages)")
-            logger.info("  - Handler 2: Callback queries (buttons)")
-            logger.info("  - Handler 3: Text messages (channel URLs)")
-            
-            logger.info("=" * 70)
-            logger.info("✓✓✓ BOT IS RUNNING AND READY ✓✓✓")
-            logger.info("Waiting for /start commands in private messages...")
-            logger.info("=" * 70)
-            
-            # Start polling
-            await idle()
-            
+        await app.start()
+        logger.info("✓✓✓ PYROGRAM CLIENT CONNECTED ✓✓✓")
+
+        # Verify bot identity
+        me = await app.get_me()
+        logger.info(f"✓ Bot Username: @{me.username}")
+        logger.info(f"✓ Bot ID: {me.id}")
+
+        # Verify destination channel
+        logger.info(f"✓ Destination Channel: {DESTINATION_CHANNEL}")
+
+        logger.info("✓ Handlers Registered:")
+        logger.info("  - Handler 1: /start, /settings, /help")
+        logger.info("  - Handler 2: Callback queries (buttons)")
+        logger.info("  - Handler 3: Text messages (channel URLs)")
+
+        logger.info("=" * 70)
+        logger.info("✓✓✓ BOT IS RUNNING AND READY ✓✓✓")
+        logger.info("Waiting for commands in private messages...")
+        logger.info("=" * 70)
+
+        # Keep the process alive without relying on idle() signal handling.
+        await asyncio.Event().wait()
+
     except KeyboardInterrupt:
         logger.info("\n✓ Bot stopped by user")
     except Exception as e:
         logger.error(f"❌ FATAL ERROR: {e}", exc_info=True)
         raise
     finally:
+        if http_server_task:
+            http_server_task.cancel()
+            try:
+                await http_server_task
+            except Exception:
+                pass
+
+        try:
+            if app.is_connected:
+                await app.stop()
+        except Exception:
+            pass
+
         if mongo_client:
             try:
                 mongo_client.close()
