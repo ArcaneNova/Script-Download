@@ -167,11 +167,12 @@ async def get_topic_messages(client: Client, ch_id, topic_id: int) -> list:
 
 # ===== BOT COMMANDS =====
 
-@app.on_message(filters.command("start") & filters.private)
+@app.on_message(filters.command("start"))
 async def start_cmd(client: Client, message: Message):
     """Handle /start command - show main menu."""
     try:
-        logger.info(f"✓ /START command received from user {message.from_user.id}")
+        user_id = message.from_user.id if message.from_user else "unknown"
+        logger.info(f"✓✓✓ /START COMMAND RECEIVED FROM USER {user_id} ✓✓✓")
         
         text = "🤖 **Telegram Topic Forwarder**\n\nSelect what you want to do:"
         
@@ -182,9 +183,9 @@ async def start_cmd(client: Client, message: Message):
         ])
         
         await message.reply_text(text, reply_markup=kb)
-        logger.info(f"✓ Menu sent to user {message.from_user.id}")
+        logger.info(f"✓✓✓ MENU RESPONSE SENT ✓✓✓")
     except Exception as e:
-        logger.error(f"ERROR in /start handler: {e}", exc_info=True)
+        logger.error(f"❌ ERROR in /start handler: {e}", exc_info=True)
         try:
             await message.reply_text(f"❌ Error: {str(e)[:100]}")
         except:
@@ -248,6 +249,22 @@ async def callback_handler(client: Client, cq):
     except Exception as e:
         logger.error(f"Callback error: {e}")
         await cq.answer(f"Error: {e}", show_alert=True)
+
+
+# Universal message logger - catch EVERYTHING
+@app.on_message()
+async def debug_all_messages(client: Client, message: Message):
+    """Log every single message - for debugging."""
+    try:
+        msg_type = "Unknown"
+        if message.text:
+            msg_type = f"Text: {message.text[:30]}"
+        elif message.command:
+            msg_type = f"Command: {message.command}"
+        
+        logger.info(f"📩 ALL_MESSAGES: Type={msg_type}, UserID={message.from_user.id if message.from_user else 'None'}, IsPrivate={message.chat.type == 'private'}")
+    except Exception as e:
+        logger.error(f"Debug logger error: {e}")
 
 
 @app.on_message(filters.text & filters.private & filters.incoming)
