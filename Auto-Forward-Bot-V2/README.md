@@ -1,98 +1,48 @@
-# Advance Content Saver Bot
+# Save Restricted Bot
 
-Advance Telegram Bot that can work as Message/Files Forwarder from Restricted or Non-Restricted Channels/Groups/Bots. It can save files even if the channel have restrictions of forwarding or else.
+*A Telegram Bot, Which can send you restricted content by it's post link*
 
-## What can this bot do
-- Forward public/private channel messages for private user login needed as forward method
-- Save/clone individual post by its post link
-- Can save multiple post link via `batch` command up to 10K
+---
 
-## Deployment Methods
+## Variables
 
-### VPS Deployment
+- `HASH` Your API Hash from my.telegram.org
+- `ID` Your API ID from my.telegram.org
+- `TOKEN` Your bot token from @BotFather
+- `STRING` Your session string, you can get it at [gist](https://gist.github.com/bipinkrish/0940b30ed66a5537ae1b5aaaee716897#file-main-py) and run it locally
 
-1. **Initial Setup**:
-   -`config.py` files with your variables.
+---
 
-2. **Clone and Run**:
-   - Clone your forked and edited repository:
-     ```bash
-     git clone forked_edited_repo_link
-     ```
-   - Navigate to the repository directory:
-     ```bash
-     cd repo_name
-     ```
-   - Run the bot:
-     ```bash
-     python main.py
-     ```
+# Usage
 
-### Render Deployment
+__FOR PUBLIC CHATS__
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+_just send post/s link_
 
-To deploy on Render:
 
-1. Push this repository to GitHub.
-2. In Render, create a new **Web Service** and connect the repo.
-3. Use the included `render.yaml` blueprint, or set:
-   - **Build command**: `pip install -r requirements.txt`
-   - **Start command**: `python main.py`
-4. Add these environment variables in Render:
-   - `API_ID`
-   - `API_HASH`
-   - `BOT_TOKEN`
-   - `BOT_OWNER_ID`
-   - `DATABASE`
-   - `DATABASE_NAME` if you want a custom database name
+__FOR PRIVATE CHATS__
 
-Render will provide the `PORT` variable automatically, and `main.py` already binds to it.
+_first send invite link of the chat (unnecessary if the account of string session already member of the chat)
+then send post/s link_
 
-### Heroku Deployment
 
-1. **Setup on Heroku**:
-   - Go to [Heroku Dashboard](https://dashboard.heroku.com) and create a new app.
-   - Connect your GitHub repository to Heroku.
-   - Search and deploy the forked repository.
-   - Back to the app view and refresh the page.
+__FOR BOT CHATS__
 
-2. **Configure Dynos**:
-   - Configure dynos for `devagagan1` and `devgagan2`.
+_send link with '/b/', bot's username and message id, you might want to install some unofficial client to get the id like below_
 
-## Additional Notes
+```
+https://t.me/b/botusername/4321
+```
 
-- Make sure to replace `forked_edited_repo_link` with the link to your forked and edited repository.
-- Replace `repo_name` with the name of your repository.
-- Update the `__init__.py` and `config.py` files with your bot's specific variables before deployment.
-- Ensure that your bot is configured correctly according to the requirements of the Telegram Bot API.
+__MULTI POSTS__
 
-## Commands Available in Bot - [TEAM SPY](https://t.me/dev_gagan)
+_send public/private posts link as explained above with formate "from - to" to send multiple messages like below_
 
-- ```/start``` - to start the bot
-- ```/cancel``` - to cancel the onging /batch task
-- ```/stats``` - to viewing the statics of bot
-- `/forward or /fwd` - to start forward
-- `restart` - to restart the bot
-- `/resetall` - to reset unlink all other users / bot
-- `/broadcast` - send bulk message to all users who ever have started the bot
-- `/help` - get help about other commands
 
-## Support
+```
+https://t.me/xxxx/1001-1010
 
-[<img src="https://img.icons8.com/ios/50/000000/instagram-new.png"/>](https://instagram.com/devagagn.in)
-[<img src="https://img.icons8.com/ios/50/000000/youtube.png"/>](https://youtube.com/@dev_gagan)
-[<img src="https://img.icons8.com/ios/50/000000/telegram-app.png"/>](https://t.me/dev_gagan)
-[<img src="https://img.icons8.com/ios/50/000000/github--v1.png"/>](https://github.com/devgaganin)
-[<img src="https://img.icons8.com/ios/50/000000/domain--v1.png"/>](https://devgagan.in)
+https://t.me/c/xxxx/101 - 120
+```
 
-## Terms of USE / Modification 
-Visit [Terms](https://github.com/devgaganin/Save-Restricted-Content-Bot-Repo/blob/main/TERMS_OF_USE.md) and accept the guidelines.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit issues or pull requests.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
+_note that space in between doesn't matter_
