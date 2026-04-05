@@ -102,7 +102,14 @@ async def settings_query(bot, query):
                   username = chat_info.username
                except Exception as e:
                   await chat_ids.delete()
-                  return await text.edit_text(f"**Cannot access this channel. Make sure:\n- Bot is admin in the channel\n- Or you're a member of the channel\n\nError: {str(e)[:100]}**")
+                  error_msg = str(e)
+                  # Provide more helpful error messages
+                  if "CHANNEL_INVALID" in error_msg:
+                     return await text.edit_text(f"**❌ Channel Link Invalid\n\nMake sure:\n- Link format is correct: t.me/c/12345 or t.me/channelname\n- Bot can access this channel\n- Bot is admin in the channel\n\nTry forwarding a message instead of pasting link.**")
+                  elif "CHANNEL_PRIVATE" in error_msg:
+                     return await text.edit_text(f"**❌ Channel is Private\n\nThe bot doesn't have access to this private channel.\n\nSolutions:\n1. Add bot as admin to the channel first\n2. Then try again\n3. Or forward a message from the channel instead\n\nError: {error_msg[:80]}**")
+                  else:
+                     return await text.edit_text(f"**❌ Cannot access this channel.\n\nMake sure:\n- Bot is admin in the channel\n- Or bot is a member\n- Channel link is correct\n\nOr try forwarding a message instead.\n\nError: {error_msg[:80]}**")
         
          # If not a link, try forwarded message
          if not chat_id and chat_ids.forward_date:

@@ -65,8 +65,11 @@ async def run(bot, message):
                 chat_info = await bot.get_chat(chat_id)
                 chat_id = chat_info.id  # Use numeric ID
                 title = chat_info.title
-            except:
-                pass
+            except Exception as e:
+                error_msg = str(e)
+                if "CHANNEL_INVALID" in error_msg or "CHANNEL_PRIVATE" in error_msg:
+                    return await message.reply('**❌ Invalid or inaccessible channel link!\n\nSolutions:\n1. Make sure bot is admin in source channel\n2. Or try forwarding the message instead\n3. Use correct format: t.me/channel/123**')
+                return await message.reply(f'**❌ Cannot access source channel.\n\nMake sure bot is admin there.\n\nError: {error_msg[:80]}**')
         elif fromid.text.lower() not in ["me", "saved"]:
             return await message.reply('**Invalid message link. Use format: t.me/channel/123 or t.me/c/ID/123 or type "me" for saved messages**')
     
