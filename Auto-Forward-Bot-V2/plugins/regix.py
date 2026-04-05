@@ -73,11 +73,10 @@ async def pub_(bot, message):
           is_continuous = getattr(sts, 'continuous', False)
 
           async for message in client.iter_messages(
-            client,
             chat_id=sts.get('FROM'), 
             limit=int(sts.get('limit')), 
             offset=int(sts.get('skip')) if sts.get('skip') else 0,
-            continuous=is_continuous
+            reverse=True
             ):
                 if await is_cancelled(client, user, m, sts):
                    return

@@ -40,6 +40,10 @@ async def run(bot, message):
        toid = channels[0]['chat_id']
        to_title = channels[0]['title']
     
+    # Ensure to_title is valid (should be channel name, not numeric ID)
+    if not to_title or (isinstance(to_title, (int, str)) and str(to_title).startswith('-100')):
+       to_title = f"Channel ({toid})"
+    
     fromid = await bot.ask(message.chat.id, Translation.FROM_MSG, reply_markup=ReplyKeyboardRemove())
     if fromid.text and fromid.text.startswith('/'):
         await message.reply(Translation.CANCEL)
@@ -57,7 +61,10 @@ async def run(bot, message):
             chat_id, last_msg_id = parsed
             title = "Link Source"
             try:
-                title = (await bot.get_chat(chat_id)).title
+                # Resolve chat_id to numeric ID if it's a username
+                chat_info = await bot.get_chat(chat_id)
+                chat_id = chat_info.id  # Use numeric ID
+                title = chat_info.title
             except:
                 pass
         elif fromid.text.lower() not in ["me", "saved"]:
@@ -132,8 +139,12 @@ async def run(bot, message):
         InlineKeyboardButton('No', callback_data="close_btn")
     ]]
     reply_markup = InlineKeyboardMarkup(buttons)
+    
+    # Final validation: ensure to_chat is not a numeric ID
+    to_chat_display = to_title if to_title and not str(to_title).startswith('-') else f"Channel (ID: {toid})"
+    
     await message.reply_text(
-        text=Translation.DOUBLE_CHECK.format(botname=_bot['name'], botuname=_bot['username'], from_chat=title, to_chat=to_title, skip=skipno.text),
+        text=Translation.DOUBLE_CHECK.format(botname=_bot['name'], botuname=_bot['username'], from_chat=title, to_chat=to_chat_display, skip=skipno.text),
         disable_web_page_preview=True,
         reply_markup=reply_markup
     )

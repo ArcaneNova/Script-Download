@@ -94,15 +94,15 @@ async def settings_query(bot, query):
          if chat_ids.text:
             parsed_link = parse_channel_link(chat_ids.text)
             if parsed_link:
-               chat_id = parsed_link
-               # Try to get channel info from Telegram
                try:
-                  chat_info = await bot.get_chat(chat_id)
+                  # Always try to get chat info to resolve username to numeric ID
+                  chat_info = await bot.get_chat(parsed_link)
+                  chat_id = chat_info.id  # Use numeric ID, not username
                   title = chat_info.title
                   username = chat_info.username
-               except:
-                  title = str(chat_id)
-                  username = None
+               except Exception as e:
+                  await chat_ids.delete()
+                  return await text.edit_text(f"**Cannot access this channel. Make sure:\n- Bot is admin in the channel\n- Or you're a member of the channel\n\nError: {str(e)[:100]}**")
         
          # If not a link, try forwarded message
          if not chat_id and chat_ids.forward_date:
