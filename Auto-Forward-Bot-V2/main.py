@@ -479,11 +479,13 @@ async def main():
     # Initialize database
     await init_db()
     
-    # Start HTTP server for Render health checks (non-blocking)
+    # Start HTTP server for Render health checks (non-blocking, but simpler)
+    loop = asyncio.get_event_loop()
     try:
-        asyncio.create_task(start_http_server())
-        asyncio.create_task(keep_alive())
-        logger.info("✓ HTTP server and keep-alive tasks created")
+        # Schedule HTTP server to start in background
+        loop.create_task(start_http_server())
+        loop.create_task(keep_alive())
+        logger.info("✓ HTTP server and keep-alive tasks scheduled")
     except Exception as e:
         logger.warning(f"Server startup warning: {e}")
     
@@ -500,8 +502,8 @@ async def main():
             # Verify destination channel
             logger.info(f"✓ Destination Channel: {DESTINATION_CHANNEL}")
             
-            # Log all registered handlers
-            logger.info(f"✓ Total Handlers Registered: {len(app._handler_groups)}")
+            # Log handlers info
+            logger.info("✓ Handlers Registered:")
             logger.info("  - Handler 1: /start command (private messages)")
             logger.info("  - Handler 2: Callback queries (buttons)")
             logger.info("  - Handler 3: Text messages (channel URLs)")
